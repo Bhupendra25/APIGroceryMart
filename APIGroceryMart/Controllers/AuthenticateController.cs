@@ -116,7 +116,7 @@ namespace GroceryStore.Controllers
         // [Authorize(Roles = "Admin")]
         [HttpPost]
         [Route("register_Admin")]
-        public async Task<IActionResult> RegisterAirline([FromBody] RegiserModel model)
+        public async Task<IActionResult> RegisterAdmin([FromBody] RegiserModel model)
         {
             var userExists = await _userManager.FindByNameAsync(model.Username);
             var userExists1 = await _userManager.FindByNameAsync(model.Email);
@@ -146,7 +146,7 @@ namespace GroceryStore.Controllers
             await _userManager.AddToRoleAsync(user, "Admin");
 
             return StatusCode(StatusCodes.Status200OK,
-                new Response { Status = "Success", Message = $"User created & Email Sent to {user.Email} SuccessFully" });
+                new Response { Status = "Success", Message = $"Admin  {user.Email} created SuccessFully" });
 
         }
 
