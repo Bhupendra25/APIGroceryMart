@@ -57,26 +57,94 @@ namespace GroceryStore.Controllers
             {
                 return Ok("Product does not exist!!!");
             }
-            // var UID = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var UID = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            /*--------------old*/
+            /* var UID = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var UID = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+             var Newuser = new UserCart()
+             {
+                 prName = item.ProductName,
+                 Quantity = item.Quantity,
+                 Amount = item.Quantity * product.Price,
+                 UserID = UID
+             };
 
-            var Newuser = new UserCart()
+             await _context.UserCarts.AddAsync(Newuser);*/
+            /*-----------new*/
+            // Check if the user already has the product in their cart
+            var existingCartItem = await _context.UserCarts.FirstOrDefaultAsync(c => c.UserID == UID && c.prName == item.ProductName);
+            if (existingCartItem != null)
             {
-                prName = item.ProductName,
-                Quantity = item.Quantity,
-                Amount = item.Quantity * product.Price,
-                UserID = UID
-            };
-
-            await _context.UserCarts.AddAsync(Newuser);
+                // If the product already exists, update the quantity and amount
+                existingCartItem.Quantity += item.Quantity;
+                existingCartItem.Amount += item.Quantity * product.Price;
+            }
+            else
+            {
+                // If the product is not in the cart, create a new cart item
+                var newCartItem = new UserCart()
+                {
+                    prName = item.ProductName,
+                    Quantity = item.Quantity,
+                    Amount = item.Quantity * product.Price,
+                    UserID = UID
+                };
+                await _context.UserCarts.AddAsync(newCartItem);
+            }
             await _context.SaveChangesAsync();
             return Ok();
 
         }
 
         [Authorize]
-        [HttpPost("BuyNow")]
+        [HttpDelete("DeleteFromCart/{prName}")]
+        public async Task<ActionResult> DeleteFromCart(string prName)
+        {
+            var UID = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var cartItem = await _context.UserCarts.FirstOrDefaultAsync(c => c.prName == prName && c.UserID == UID);
+            if (cartItem == null)
+            {
+                return NotFound();
+            }
+
+            _context.UserCarts.Remove(cartItem);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        [HttpPut]
+        [Route("UpdateCart")]
+        public async Task<IActionResult> PutProduct(int qty, string prN)
+        {
+            // Get the user ID
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            // Find the user's cart
+            var userCart = await _context.UserCarts
+                .FirstOrDefaultAsync(c => c.UserID == userId && c.prName == prN);
+
+            if (userCart == null)
+            {
+                return NotFound(); // or any appropriate response if the cart doesn't exist
+            }
+            //get product price
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.PrName == prN);
+            // Update the quantity
+            userCart.Quantity = qty;
+            userCart.Amount = qty * product.Price;
+
+            // Save changes to the database
+            await _context.SaveChangesAsync();
+
+            return Ok();
+
+        }
+
+        [Authorize]
+        /*  [HttpPost("BuyNow")]*/
+        [HttpGet("BuyNow")]
         public async Task<ActionResult> BuyNow()
         {
             try
@@ -92,20 +160,55 @@ namespace GroceryStore.Controllers
                     return Ok("No items in cart! Please add something in your cart!!");
                 }
                 // Calculate total amount due
-                decimal totalAmount = userCartItems.Sum(c => c.Amount);
+                /*decimal totalAmount = userCartItems.Sum(c => c.Amount);
 
                 // Merge cart items into a list of product names
                 var products = userCartItems.Select(c => c.prName).ToList();
 
 
                 // Return list of products and total amount due
-                return Ok(new { products, totalAmount });
+                return Ok(new { products, totalAmount });*/
+                /*prasanna's logic*/
+                /* var product = await _context.Products.FirstOrDefaultAsync(p => p.PrName == userCartItems.prName);
+
+                 var products = userCartItems.Select(c => new
+                 {
+
+                     prName = c.prName,
+                     Quantity = c.Quantity,
+                     Amount = c.Amount,
+                     Price = c.p
+
+                 }).ToList();
+
+
+                 // Return list of products and total amount due
+                 return Ok(products);*/
+                /*---------------------------------------------------------------------------------------------------------*/
+                var products = (from cartItem in userCartItems
+                                join product in _context.Products
+                                on cartItem.prName equals product.PrName
+                                select new
+                                {
+                                    prName = cartItem.prName,
+                                    Quantity = cartItem.Quantity,
+                                    Amount = cartItem.Amount,
+                                    Price = product.Price
+                                }).ToList();
+
+                // Return list of products and total amount due
+                return Ok(products);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
+
+
+
+
         [Authorize]
         [HttpPost("Checkout")]
         public async Task<ActionResult> Checkout(string address)

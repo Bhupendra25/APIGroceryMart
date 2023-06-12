@@ -13,5 +13,10 @@ namespace GroceryStore.Data
 
         [Required(ErrorMessage = "Password is required")]
         public string? Password { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [Compare("Password", ErrorMessage = "Password and Confirm Password must match")]
+        public string? ConfirmPassword { get; set; }
+
     }
 }
