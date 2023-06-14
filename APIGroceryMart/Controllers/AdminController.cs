@@ -46,7 +46,7 @@ namespace GroceryStore.Controllers
         }
 
         [HttpPost]
-        [Route("Add Product")]
+        [Route("AddProduct")]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
             if (_context.Products.Where(n => n.PrName == product.PrName).Any())
@@ -62,7 +62,7 @@ namespace GroceryStore.Controllers
         }
 
         [HttpPut]
-        [Route("Update Product")]
+        [Route("UpdateProduct")]
         public async Task<IActionResult> PutProduct(int id, Product product)
         {
             if (id != product.PrID)

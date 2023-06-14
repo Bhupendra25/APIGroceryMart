@@ -58,19 +58,7 @@ namespace GroceryStore.Controllers
                 return Ok("Product does not exist!!!");
             }
             var UID = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            /*--------------old*/
-            /* var UID = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-             var Newuser = new UserCart()
-             {
-                 prName = item.ProductName,
-                 Quantity = item.Quantity,
-                 Amount = item.Quantity * product.Price,
-                 UserID = UID
-             };
-
-             await _context.UserCarts.AddAsync(Newuser);*/
-            /*-----------new*/
             // Check if the user already has the product in their cart
             var existingCartItem = await _context.UserCarts.FirstOrDefaultAsync(c => c.UserID == UID && c.prName == item.ProductName);
             if (existingCartItem != null)
@@ -159,32 +147,7 @@ namespace GroceryStore.Controllers
                 {
                     return Ok("No items in cart! Please add something in your cart!!");
                 }
-                // Calculate total amount due
-                /*decimal totalAmount = userCartItems.Sum(c => c.Amount);
 
-                // Merge cart items into a list of product names
-                var products = userCartItems.Select(c => c.prName).ToList();
-
-
-                // Return list of products and total amount due
-                return Ok(new { products, totalAmount });*/
-                /*prasanna's logic*/
-                /* var product = await _context.Products.FirstOrDefaultAsync(p => p.PrName == userCartItems.prName);
-
-                 var products = userCartItems.Select(c => new
-                 {
-
-                     prName = c.prName,
-                     Quantity = c.Quantity,
-                     Amount = c.Amount,
-                     Price = c.p
-
-                 }).ToList();
-
-
-                 // Return list of products and total amount due
-                 return Ok(products);*/
-                /*---------------------------------------------------------------------------------------------------------*/
                 var products = (from cartItem in userCartItems
                                 join product in _context.Products
                                 on cartItem.prName equals product.PrName
